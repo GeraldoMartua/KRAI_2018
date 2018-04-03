@@ -51,12 +51,21 @@ bool errorGet = 0;
 //void motor_drive_all(int v1, int v2, int v3, int v4);
 #define BT_STATE 47
 #define LED 13
- 
+
+
+//bool OUT_DPAD_LeftState = LOW;         // the current state of the output pin
+bool IN_DPAD_LeftState = LOW;             // the current reading from the input pin
+bool lastButtonDPAD_LeftState = HIGH;   // the previous reading from the input pin
+
+long lastDebounceTimeDPAD_Left = 0;    // the last time the output pin was toggled
+long debounceDelayDPAD_Left = 50;    // the debounce time; increase if the output flickers
+
+
 
 int degreeLeft, degreeRight;
 void setup() {
   Serial.begin(9600);
-//  Serial2.begin(9600);
+  Serial2.begin(9600);
   Serial3.begin(115200);
   lcd_init();
   motor_mecanum_init();
@@ -69,6 +78,7 @@ void loop() {
     ps2_safety();
   } else {
     lcd.clear();
+    //delay(200);
     lcd.print("Choose Menu");
     lcd.setCursor(0, 1);
     switch (menu) {
@@ -86,8 +96,17 @@ void loop() {
         break;
     }
 
-    if (ps2_left()) menu--;
-    if (ps2_right()) menu++;
+    if (ps2_left()){
+    //delay(100);
+    menu--;
+    
+    }
+    
+    if (ps2_right()){ 
+    //delay(100);
+    
+    menu++;
+    }
     if (menu > 2) menu = 0;
     if (menu < 0) menu = 2;
 
@@ -96,31 +115,43 @@ void loop() {
         case 0:
           lcd.clear();
           lcd.print("Manual Slow Speed");
+          delay(1000);
           degreeLeft = degreeLeft0 + 90;
           degreeRight = degreeRight0 - 90;
           while (ps2_start() == 0) {
             serial_controller();
             start_mobilitation(30, 40, 0); 
+           
             pneumatic_running();//update 19th March 2018
+            
           };
+          motor_drive_all(0, 0, 0, 0);
           break;
         case 1:
           lcd.clear();
           lcd.print("Manual Full Speed");
+          delay(1000);
           while (ps2_start() == 0) {
             serial_controller();
             start_mobilitation(100, 50, 1) ;
+            
             pneumatic_running();//update 19th March 2018
           };
+          motor_drive_all(0, 0, 0, 0);
           break;
         case 2:
           lcd.clear();
           lcd.print("Motor Debug");
+          delay(1000);
           while (ps2_start() == 0) {
             serial_controller();
+            if(ps2_up()){
              motor_drive_all(40, 40, 40, 40);
+            
              pneumatic_running();//update 19th March 2018
+            }
           }
+          motor_drive_all(0, 0, 0, 0);
           break;
         }
       delay(180);
@@ -151,6 +182,26 @@ void serial_controller() {
   }  
 }
 
+void menu_min(bool Left){
+    lastDebounceTimeDPAD_Left = millis();
+    lastButtonDPAD_LeftState = Left;
+    
+
+  if((millis() - lastDebounceTimeDPAD_Left) > debounceDelayDPAD_Left){
+    if(IN_DPAD_LeftState != lastButtonDPAD_LeftState){
+      IN_DPAD_LeftState = lastButtonDPAD_LeftState;
+      if(IN_DPAD_LeftState == 1){
+        //pneumatic_LeftState = !pneumatic_LeftState;
+        //digitalWrite(pneumatic_Left, pneumatic_LeftState);
+        menu--;
+        }
+       if(IN_DPAD_LeftState == 0){
+        menu = menu + 0;
+        }
+      }
+  
+  }
+}
 void ps2_safety(){
   stop_all();
   if (digitalRead(BT_STATE) == 0) {

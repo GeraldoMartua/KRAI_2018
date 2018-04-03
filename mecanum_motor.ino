@@ -37,7 +37,80 @@ void start_mobilitation(float max_speed, float rotation_const, bool speed_type) 
   else if (ps2_R2()) omega = -1;
   else omega = 0;
 
-  /********************************************************Normal Steering***************************************************/
+  /********************************************************Second Movement Orientation***************************************************/
+  if (ps2_L1() == 0 && ps2_R1() == 1 && ps2_LY == 128 && ps2_LX == 128) { //Normal D-Pad
+  // Hold R1 to run normal steering
+    error1 = 1; error2 = 1; error3 = 1; error4 = 1;
+    speed_x = 0;
+    speed_y = 0;
+
+    v[1] = 0;
+    v[2] = 0;
+    v[3] = 0;
+    v[4] = 0;
+
+    if (ps2_down()) {
+      v[1] += 120;
+      v[2] += 120;
+      v[3] += 120;
+      v[4] += 120;
+      omega += 0.185;
+    } 
+    if (ps2_up()) {
+      v[1] -= 120;
+      v[2] -= 120;
+      v[3] -= 120;
+      v[4] -= 120;
+      omega += 0.185;
+    } 
+    if (ps2_right()) {
+      v[1] -= (60);
+      v[2] += (80);
+      v[3] += (80);
+      v[4] -= (80);
+      //omega += 0.512;
+      omega += 0.185;
+    } 
+    if (ps2_left()) {
+      v[1] += (75);
+      v[2] -= (65);
+      v[3] -= (75);
+      v[4] += (75);
+      //omega += -0.548;
+      omega += 0.185;
+    }
+    v[1] += - (L1 + L2) * omega * rotation_const;
+    v[2] += (L1 + L2) * omega * rotation_const;
+    v[3] +=  - (L1 + L2) * omega * rotation_const;
+    v[4] += (L1 + L2) * omega * rotation_const;
+  }
+
+
+
+  
+  if (ps2_L1() == 0 && ps2_R1() == 1 && (ps2_LY != 128 || ps2_LX != 128)) { //Normal Analog
+
+    error1 = 1; error2 = 1; error3 = 1; error4 = 1;
+    speed_x = -(128 - (float)PS2_x) / 128 * max_speed;
+    speed_y = -(128 - (float)PS2_y) / 128 * max_speed;
+    //       ^ xs
+    //       |
+    // ys    |
+    // <-----|
+    v[1] = (speed_x - speed_y - (L1 + L2) * omega * rotation_const) * error1;
+    v[2] = (speed_x + speed_y + (L1 + L2) * omega * rotation_const) * error2;
+    v[3] = (speed_x + speed_y - (L1 + L2) * omega * rotation_const) * error3;
+    v[4] = (speed_x - speed_y + (L1 + L2) * omega * rotation_const) * error4;
+  }
+
+
+
+ /********************************************************First Movement Orientation*********************************************************************/
+//Up direction becomes Right Direction
+//Down direction becomes Left Direction
+//Left direction becomes Up Direction
+//Right direction becomes Down Direction   
+
   if (ps2_L1() == 0 && ps2_R1() == 0 && ps2_LY == 128 && ps2_LX == 128) { //Normal D-Pad
 
     error1 = 1; error2 = 1; error3 = 1; error4 = 1;
@@ -49,55 +122,75 @@ void start_mobilitation(float max_speed, float rotation_const, bool speed_type) 
     v[3] = 0;
     v[4] = 0;
 
-    if (ps2_up()) {
+    if (ps2_left()) {
       v[1] += 120;
       v[2] += 120;
       v[3] += 120;
       v[4] += 120;
       omega += 0.185;
     } 
-    if (ps2_down()) {
+    if (ps2_right()) {
       v[1] -= 120;
       v[2] -= 120;
       v[3] -= 120;
       v[4] -= 120;
       omega += 0.185;
     } 
-    if (ps2_left()) {
-      v[1] -= (60);
-      v[2] += (80);
+    if (ps2_down()) {
+      v[1] -= (74);
+      v[2] += (75);
       v[3] += (80);
       v[4] -= (80);
       //omega += 0.512;
       omega += 0.185;
     } 
-    if (ps2_right()) {
-      v[1] += (75);
-      v[2] -= (65);
-      v[3] -= (75);
-      v[4] += (75);
+    if (ps2_up()) { //Normal (75)
+      v[1] += (78);
+      v[2] -= (76);
+      v[3] -= (72);
+      v[4] += (70);
       //omega += -0.548;
       omega += 0.185;
     }
-    //v[1] += - (L1 + L2) * omega * rotation_const;
-    //v[2] += (L1 + L2) * omega * rotation_const;
-    //v[3] +=  - (L1 + L2) * omega * rotation_const;
-    //v[4] += (L1 + L2) * omega * rotation_const;
+    v[1] += - (L1 + L2) * omega * rotation_const;
+    v[2] += (L1 + L2) * omega * rotation_const;
+    v[3] +=  - (L1 + L2) * omega * rotation_const;
+    v[4] += (L1 + L2) * omega * rotation_const;
   }
-  if (ps2_L1() == 0 && ps2_R1() == 0 && (ps2_LY != 128 || ps2_LX != 128)) { //Normal Analog
 
+
+
+  
+  if (ps2_L1() == 0 && ps2_R1() == 0 && (ps2_LY != 128 || ps2_LX != 128)) { 
+    
+    //Normal Analog(2nd Orientation)
+    //Being set as Default Movement
     error1 = 1; error2 = 1; error3 = 1; error4 = 1;
-    speed_x = - (128 - (float)PS2_x) / 128 * max_speed;
-    speed_y = (128 - (float)PS2_y) / 128 * max_speed;
+    speed_x = (128 - (float)PS2_y) / 128 * max_speed;  // speed_x comes from y coordinates
+    speed_y = -(128 - (float)PS2_x) / 128 * max_speed;  // speed_y comes from x coordinates
     //       ^ xs
     //       |
     // ys    |
-    // <-----|
+    // <-----| 
     v[1] = (speed_x - speed_y - (L1 + L2) * omega * rotation_const) * error1;
     v[2] = (speed_x + speed_y + (L1 + L2) * omega * rotation_const) * error2;
     v[3] = (speed_x + speed_y - (L1 + L2) * omega * rotation_const) * error3;
     v[4] = (speed_x - speed_y + (L1 + L2) * omega * rotation_const) * error4;
+    
+
+    
   }
+
+
+
+
+
+
+
+
+
+
+
   
   /********************************************************Backward Steering*********************************************************************/
   if (ps2_L1() && ps2_R1() && ps2_LY == 128 && ps2_LX == 128) { //Backward D-Pad
@@ -111,14 +204,14 @@ void start_mobilitation(float max_speed, float rotation_const, bool speed_type) 
     v[3] = 0;
     v[4] = 0;
 
-    if (ps2_down()) {
+    if (ps2_up()) {
       v[1] += 120;
       v[2] += 120;
       v[3] += 120;
       v[4] += 120;
       omega += 0.185;
     } 
-    if (ps2_up()) {
+    if (ps2_down()) {
       v[1] -= 120;
       v[2] -= 120;
       v[3] -= 120;
